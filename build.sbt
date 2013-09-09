@@ -1,27 +1,58 @@
-organization := "reaktor"
+organization := "com.github.seratch.reaktor"
 
 name := "scct"
 
-version := "0.2-SNAPSHOT"
+version := "0.2.001"
 
 scalaVersion := "2.9.2"
 
-crossScalaVersions := Seq("2.9.2", "2.9.1-1", "2.9.1", "2.9.0-1", "2.9.0")
+crossScalaVersions := Seq("2.9.3", "2.9.2", "2.9.1")
 
-libraryDependencies <+= (scalaVersion) { v =>
-  "org.scala-lang" % "scala-compiler" % v % "provided"
+libraryDependencies <++= (scalaVersion) { v => Seq(
+  "org.scala-lang" % "scala-compiler" % v % "provided",
+  "org.specs2"     %% "specs2" % (v match { 
+    case "2.9.3" => "1.12.4.1"
+    case _ => "1.12.4"
+  }) % "test",
+  "junit" % "junit" % "4.11" % "test",
+  "org.mockito" % "mockito-all" % "1.9.5" % "test" withSources
+)}
+
+publishTo <<= version { (v: String) =>
+  val nexus = "https://oss.sonatype.org/"
+  if (v.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus + "content/repositories/snapshots")
+  else Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
 
-libraryDependencies ++= Seq(
-  "junit" % "junit" % "4.10" % "test",
-  "org.mockito" % "mockito-all" % "1.9.5-rc1" % "test" withSources,
-  "org.specs2" % "specs2" % "1.11" % "test" cross CrossVersion.binaryMapped {
-    case "2.9.0-1" => "2.9.1"
-    case "2.9.0" => "2.9.1"
-    case x => x
-  }
-)
+testOptions in Test <+= (scalaVersion in Test) map { (scalaVer) =>
+  Tests.Setup { () => System.setProperty("scct-test-scala-version", scalaVer) }
+}
 
-publishTo := Some(Resolver.file("file",  new File("../gh-pages/maven-repo")))
+publishMavenStyle := true
 
-resolvers += "scala-tools-releases" at "https://oss.sonatype.org/content/groups/scala-tools/"
+publishArtifact in Test := false
+
+pomIncludeRepository := { x => false }
+
+pomExtra := <url>http://seratch.github.com/scalikejdbc</url>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <scm>
+    <url>git@github.com:seratch/scct.git</url>
+    <connection>scm:git:git@github.com:seratch/scct.git</connection>
+  </scm>
+  <developers>
+    <developer>
+      <id>mtkopone</id>
+      <name>Mikko Koponen</name>
+      <url>http://mtkopone.github.com</url>
+    </developer>
+  </developers>
+
+scalariformSettings
+
